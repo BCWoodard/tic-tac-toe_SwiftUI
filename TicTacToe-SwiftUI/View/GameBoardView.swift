@@ -99,9 +99,10 @@ struct GameBoardView: View {
                     ForEach([
                         ("Play Again", {
                             viewModel.resetGame()
+                            viewModel.dismissGameResult()
                         }),
                         ("Show the Board", {
-                            viewModel.dismissResult()
+                            viewModel.dismissGameResult()
                         })
                     ], id: \.0) { title, action in
                         Button(title, action: action)

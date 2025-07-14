@@ -5,29 +5,41 @@
 //  Created by Brad Woodard on 7/14/25.
 //
 
-import SwiftUI
+import Foundation
 
 final class TicTacToeViewModel: ObservableObject {
-    @Published var board = Array(repeating: "", count: 9)
-    @Published var isCrossTurn = true
+    @Published private var game = TicTacToeGame()
     @Published var showResultSheet = false
     @Published var resultText = ""
     @Published var resultImage: String? = nil
+    
+    var board: [String] {
+        game.board
+    }
+
+    var isCrossTurn: Bool {
+        game.isCrossTurn
+    }
 
     func makeMove(at index: Int) {
-        guard board[index].isEmpty else { return }
-        board[index] = isCrossTurn ? "X" : "O"
-        isCrossTurn.toggle()
-        checkGameOver()
+        game.makeMove(at: index)
+        if let winner = game.checkWinner() {
+            resultText = "The winner is: \n\(winner)!"
+            resultImage = nil
+            showResultSheet = true
+        } else if game.isDraw {
+            resultText = "There is no winner."
+            resultImage = "sad_trombone"
+            showResultSheet = true
+        }
     }
 
     func resetGame() {
-        board = Array(repeating: "", count: 9)
-        isCrossTurn = true
+        game.reset()
         showResultSheet = false
     }
 
-    func dismissResult() {
+    func dismissGameResult() {
         showResultSheet = false
     }
 

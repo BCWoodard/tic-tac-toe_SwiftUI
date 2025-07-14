@@ -1,5 +1,5 @@
 //
-//  ContentView.swift
+//  GameBoardView.swift
 //  TicTacToe-SwiftUI
 //
 //  Created by Brad Woodard on 7/10/25.
@@ -7,12 +7,8 @@
 
 import SwiftUI
 
-struct ContentView: View {
-    @State private var board: [String] = Array(repeating: "", count: 9)
-    @State private var isCrossTurn = true
-    @State private var showResultSheet = false
-    @State private var resultText: String = ""
-    @State private var resultImage: String? = nil
+struct GameBoardView: View {
+    @StateObject private var viewModel = TicTacToeViewModel()
 
     var body: some View {
         VStack(spacing: 20) {
@@ -30,22 +26,18 @@ struct ContentView: View {
                 LazyVGrid(columns: Array(repeating: GridItem(.fixed(100), spacing: 10), count: 3), spacing: 10) {
                     ForEach(0..<9) { index in
                         Button(action: {
-                            if board[index].isEmpty {
-                                board[index] = isCrossTurn ? "X" : "O"
-                                isCrossTurn.toggle()
-                                checkGameOver()
-                            }
+                            viewModel.makeMove(at: index)
                         }) {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 8)
-                                    .fill(board[index].isEmpty ? Color.gray : Color.white)
+                                    .fill(viewModel.board[index].isEmpty ? Color.gray : Color.white)
                                     .frame(width: 100, height: 100)
-                                Text(board[index])
+                                Text(viewModel.board[index])
                                     .font(.system(size: 80, weight: .bold))
                                     .foregroundColor(.black)
                             }
                         }
-                        .disabled(!board[index].isEmpty)
+                        .disabled(!viewModel.board[index].isEmpty)
                     }
                 }
 
@@ -76,8 +68,7 @@ struct ContentView: View {
             Spacer()
 
             Button("Play Again") {
-                board = Array(repeating: "", count: 9)
-                isCrossTurn = true
+                viewModel.resetGame()
             }
             .frame(height: 50)
             .frame(maxWidth: .infinity)
@@ -92,27 +83,25 @@ struct ContentView: View {
 
             Spacer()
         }
-        .sheet(isPresented: $showResultSheet) {
+        .sheet(isPresented: $viewModel.showResultSheet) {
             VStack {
-                if let imageName = resultImage {
+                if let imageName = viewModel.resultImage {
                     Image(imageName)
                         .resizable()
                         .scaledToFit()
                         .frame(height: 160)
                 }
-                Text(resultText)
+                Text(viewModel.resultText)
                     .font(.title)
                     .multilineTextAlignment(.center)
                     .padding(.bottom, 16)
                 Group {
                     ForEach([
                         ("Play Again", {
-                            board = Array(repeating: "", count: 9)
-                            isCrossTurn = true
-                            showResultSheet = false
+                            viewModel.resetGame()
                         }),
                         ("Show the Board", {
-                            showResultSheet = false
+                            viewModel.dismissResult()
                         })
                     ], id: \.0) { title, action in
                         Button(title, action: action)
@@ -126,32 +115,8 @@ struct ContentView: View {
             .presentationDetents([.fraction(0.40)])
         }
     }
-    
-    private func checkGameOver() {
-        let winPatterns = [
-            [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
-            [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
-            [0, 4, 8], [2, 4, 6]             // diagonals
-        ]
-        
-        for pattern in winPatterns {
-            let first = board[pattern[0]]
-            if first != "" && pattern.allSatisfy({ board[$0] == first }) {
-                resultText = "The winner is:\n\(first)"
-                resultImage = nil
-                showResultSheet = true
-                return
-            }
-        }
-
-        if !board.contains("") {
-            resultText = "There is no winner."
-            resultImage = "sad_trombone"
-            showResultSheet = true
-        }
-    }
 }
 
 #Preview {
-    ContentView()
+    GameBoardView()
 }
